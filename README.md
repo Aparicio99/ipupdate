@@ -19,8 +19,8 @@ A tool to send updates of IP address changes to a web server securely over simpl
 ### How can I get it to work?
 
 **Requirements**
-  * A webserver with any version of PHP (just needs SQLite enabled)
-  * Python 3.x in the client machine
+  * A webserver with any version of PHP (just needs SQLite enabled).
+  * Python 3.x in the client machine.
 
 **Steps**
   * Put ipupdate.php and getip.php on a web server with PHP.
@@ -33,7 +33,7 @@ A tool to send updates of IP address changes to a web server securely over simpl
 
 
 ### Why is it useful?
-Sometimes it's useful to connect to our home, or even host some public service there, but normally the this IP addresses are dynamically assigned and can change anytime.
+Sometimes it's useful to connect to our home, or even host some public service there, but normally this IP addresses are dynamically assigned and can change anytime.
 
 Can also be used to get the history log of the IP addresses changes.
 
