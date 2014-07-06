@@ -17,6 +17,12 @@ A tool to send updates of IP address changes to a web server securely over simpl
     * Show the current IP address on the web server from the last entry in the database.
 
 ### How can I get it to work?
+
+**Requirements**
+  * A webserver with any version of PHP (just needs SQLite enabled)
+  * Python 3.x in the client machine
+
+**Steps**
   * Put ipupdate.php and getip.php on a web server with PHP.
   * Put ipupdater.py anywhere in the machine you want to serve as client.
   * Change the HOST variable in ipupdater.py to your web server.
