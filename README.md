@@ -52,7 +52,3 @@ Instead of having a simple password being passed in plaintext, it uses an HMAC w
 
 By having the same password configured in the **ipupdater.py** and **ipupdate.php** they generate the same hash at both ends thus verifying the authenticity of the update.
 This prevents replay attacks by having a timestamp in the update message, and verifying that a new update have a more recent timestamp than the last update.
-
-### TODO
-  * Authenticate also the response to the IP request.
-  * Refactor the http code.

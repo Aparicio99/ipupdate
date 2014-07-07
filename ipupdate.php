@@ -1,12 +1,21 @@
 <?php
 header('Content-type: text/plain');
 
-$DB_FILE   = 'ipupdate.sqlite';
 $PASSWORD  = 'some random password';
-$HASH_ALGO = 'sha256';
+$DB_FILE   = 'ipupdate.sqlite';
+
+function append_hmac($msg, $password) {
+	$mac = hash_hmac('sha256', $msg, $password);
+	return $msg . '&h=' . $mac;
+}
+
+function validate_hmac($msg, $msg_mac, $password) {
+	$new_mac = hash_hmac('sha256', $msg, $password);
+	return $new_mac == $msg_mac;
+}
 
 function validate($remote_ip, $ip, $timestamp, $mac) {
-	global $HASH_ALGO, $PASSWORD;
+	global $PASSWORD;
 
 	if ($remote_ip != $ip) {
 		echo 'Error: IP address mismatch';
@@ -14,9 +23,8 @@ function validate($remote_ip, $ip, $timestamp, $mac) {
 	}
 
 	$params = sprintf('type=update&ip=%s&ts=%d', $ip, $timestamp);
-	$mac_msg = hash_hmac($HASH_ALGO, $params, $PASSWORD);
 
-	if ($mac != $mac_msg) {
+	if (!validate_hmac($params, $mac, $PASSWORD)) {
 		echo 'Error: MAC mismatch';
 		return false;
 	}
@@ -55,15 +63,17 @@ function updatedb($ip, $timestamp) {
 }
 
 $type      = $_POST['type'];
+$timestamp = $_POST['ts'];
 $remote_ip = $_SERVER['REMOTE_ADDR'];
 
 if ($type == 'ip' ) {
-	echo $remote_ip;
+	$params = sprintf('ip=%s&ts=%d', $remote_ip, $timestamp);
+
+	echo append_hmac($params, $PASSWORD);
 
 } elseif ($type == 'update') {
-	$ip        = $_POST['ip'];
-	$timestamp = $_POST['ts'];
-	$mac       = $_POST['h'];
+	$ip  = $_POST['ip'];
+	$mac = $_POST['h'];
 
 	if (validate($remote_ip, $ip, $timestamp, $mac))
 		updatedb($ip, $timestamp);
