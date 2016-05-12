@@ -15,6 +15,8 @@ A tool to send updates of IP address changes to a web server securely over simpl
     * Logs the update in a **SQLite** database.
   * getip.php
     * Show the current IP address on the web server from the last entry in the database.
+  * config.php
+    * Contains the configuration variables: database location and shared secret.
 
 ### How can I get it to work?
 
@@ -25,14 +27,14 @@ A tool to send updates of IP address changes to a web server securely over simpl
 **Steps**
   * Put ipupdate.php and getip.php on a web server with PHP.
   * Put ipupdater.py anywhere in the machine you want to serve as client.
-  * Set the PASSWORD variable in ipupdate.php-
+  * Set the SECRET variable in ipupdate.php.
   * Change the names of the files if you don't want the original names.
   * Use a cronjob in your client to run the ipupdater.py at the interval you want, like 1 hour.
   * Access getip.php on the web server to see the current IP address
 
 The usage of ipupdater.py is:
 
-```ipupdater.py -w HOST -p PASSWORD [-u URL]```
+```ipupdater.py -w HOST -p SECRET [-u URL]```
 
 ### Why is it useful?
 Sometimes it's useful to connect to our home, or even host some public service there, but normally this IP addresses are dynamically assigned and can change anytime.
