@@ -3,6 +3,10 @@ header('Content-type: text/plain');
 
 require('../config.php');
 
+define('IPv4', 1);
+define('IPv6', 2);
+define('IP_UNKNOWN', 3);
+
 function append_hmac($msg, $password) {
 	$mac = hash_hmac('sha256', $msg, $password);
 	return $msg . '&h=' . $mac;
@@ -30,27 +34,54 @@ function validate($remote_ip, $ip, $timestamp, $mac) {
 	return true;
 }
 
+function ip_version($ip) {
+
+	# An IPv4 always exactly has 3 dots - A.B.C.D
+	if (substr_count($ip, '.') == 3)
+		return IPv4;
+
+	# An IPv6 has at least 2 colons (::), altought less than 3 shouldn't happen (A:B::C)
+	elseif (strpos($ip, ':') >= 3)
+		return IPv6;
+
+	else
+		return IP_UNKNOWN;
+}
+
 function updatedb($ip, $timestamp) {
 	global $DB_FILE;
 
-	$db = new SQLite3($DB_FILE);
-	$result = $db->exec('CREATE TABLE IF NOT EXISTS log
-		(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-		ip VARCHAR NOT NULL,
-		timestamp UNSIGNED INT NOT NULL);');
+	switch (ip_version($ip)) {
+		case IPv4:
+			$table = 'log_ipv4';
+			break;
+		case IPv6:
+			$table = 'log_ipv6';
+			break;
+		default:
+			echo 'Error: Unknown IP address format';
+			break;
+	}
 
-	$results = $db->query('SELECT max(id) as id, ip, timestamp FROM log;');
+	$db = new SQLite3($DB_FILE);
+	$result = $db->exec('CREATE TABLE IF NOT EXISTS '.$table.'
+	                     (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	                      ip VARCHAR NOT NULL,
+	                      timestamp UNSIGNED INT NOT NULL);');
+
+
+	$results = $db->query('SELECT max(id) as id, ip, timestamp FROM '.$table.';');
 	$row = $results->fetchArray();
 
 	if ($ip != $row['ip']) {
-		$statement = $db->prepare('INSERT INTO log(ip,timestamp) VALUES (:ip,:timestamp);');
+		$statement = $db->prepare('INSERT INTO '.$table.'(ip,timestamp) VALUES (:ip,:timestamp);');
 		$statement->bindValue(':ip', $ip);
 		$statement->bindValue(':timestamp', $timestamp);
 		$statement->execute();
 		echo 'OK: New IP updated';
 
 	} elseif ($timestamp > $row['timestamp']) {
-		$statement = $db->prepare('UPDATE log SET timestamp=:timestamp WHERE id=:id');
+		$statement = $db->prepare('UPDATE '.$table.' SET timestamp=:timestamp WHERE id=:id');
 		$statement->bindValue(':timestamp', $timestamp);
 		$statement->bindValue(':id', $row['id']);
 		$result = $statement->execute();
