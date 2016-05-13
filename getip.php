@@ -1,17 +1,25 @@
 <?php
 header('Content-type: text/plain');
 
-$DB_FILE = 'ipupdate.sqlite';
+require('../config.php');
 
-$db = new SQLite3($DB_FILE);
-$results = $db->query('SELECT max(id) as id, ip, timestamp FROM log;');
-$row = $results->fetchArray();
+function print_table_last_ip($table) {
+	global $DB_FILE;
 
-echo $row['ip'] . "\n";
+	$db = new SQLite3($DB_FILE);
+	$results = $db->query('SELECT max(id) as id, ip, timestamp FROM '.$table.';');
+	$row = $results->fetchArray();
 
-$date = new DateTime();
-#$date->setTimeZone(new DateTimeZone('Europe/Lisbon'));
-$date->setTimestamp($row['timestamp']);
-echo $date->format('Y-m-d H:i:s') . "\n";
+	$date = new DateTime();
+	$date->setTimeZone(new DateTimeZone('Europe/Lisbon'));
+	$date->setTimestamp($row['timestamp']);
+	$date_string = $date->format('Y-m-d H:i:s');
+
+	echo $date_string . ' - ' . $row['ip'] . "\n";
+
+}
+
+print_table_last_ip('log_ipv4');
+print_table_last_ip('log_ipv6');
 
 ?>
