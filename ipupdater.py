@@ -44,7 +44,7 @@ def getip(args):
     return ip
 
 def update(args, ip):
-    params = append_hmac('type=update&ip=%s&ts=%d' % (ip, get_timestamp()), args.password)
+    params = append_hmac('type=update&ip=%s&name=%s&ts=%d' % (ip, args.name, get_timestamp()), args.password)
     response = http_post(args.host, args.url, params)
     print('Response: ' + response)
 
@@ -54,6 +54,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--host', help='Webserver hostname', required=True)
     parser.add_argument('-p', '--password', help='Shared password', required=True)
     parser.add_argument('-u', '--url', help='Script URL (default: ipupdate.php)', default='ipupdate.php')
+    parser.add_argument('-n', '--name', help='Name to update (default: empty)', default='')
     args = parser.parse_args()
 
     ip = getip(args)

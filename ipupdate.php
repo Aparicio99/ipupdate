@@ -17,7 +17,7 @@ function validate_hmac($msg, $msg_mac, $password) {
 	return $new_mac == $msg_mac;
 }
 
-function validate($remote_ip, $ip, $timestamp, $mac) {
+function validate($remote_ip, $ip, $name, $timestamp, $mac) {
 	global $SECRET;
 
 	if ($remote_ip != $ip) {
@@ -25,7 +25,7 @@ function validate($remote_ip, $ip, $timestamp, $mac) {
 		return false;
 	}
 
-	$params = sprintf('type=update&ip=%s&ts=%d', $ip, $timestamp);
+	$params = sprintf('type=update&ip=%s&name=%s&ts=%d', $ip, $name, $timestamp);
 
 	if (!validate_hmac($params, $mac, $SECRET)) {
 		echo 'Error: MAC mismatch';
@@ -48,7 +48,7 @@ function ip_version($ip) {
 		return IP_UNKNOWN;
 }
 
-function updatedb($ip, $timestamp) {
+function updatedb($ip, $name, $timestamp) {
 	global $DB_FILE;
 
 	switch (ip_version($ip)) {
@@ -67,15 +67,20 @@ function updatedb($ip, $timestamp) {
 	$result = $db->exec('CREATE TABLE IF NOT EXISTS '.$table.'
 	                     (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	                      ip VARCHAR NOT NULL,
+	                      name VARCHAR NOT NULL,
+	                      first_seen UNSIGNED INT NOT NULL,
 	                      timestamp UNSIGNED INT NOT NULL);');
 
 
-	$results = $db->query('SELECT max(id) as id, ip, timestamp FROM '.$table.';');
+	$statement = $db->prepare('SELECT max(id) as id, ip, timestamp FROM '.$table.' WHERE name=:name;');
+	$statement->bindValue(':name', $name);
+	$results = $statement->execute();
 	$row = $results->fetchArray();
 
 	if ($ip != $row['ip']) {
-		$statement = $db->prepare('INSERT INTO '.$table.'(ip,timestamp) VALUES (:ip,:timestamp);');
+		$statement = $db->prepare('INSERT INTO '.$table.'(ip,name,first_seen,timestamp) VALUES (:ip,:name,:timestamp,:timestamp);');
 		$statement->bindValue(':ip', $ip);
+		$statement->bindValue(':name', $name);
 		$statement->bindValue(':timestamp', $timestamp);
 		$statement->execute();
 		echo 'OK: New IP updated';
@@ -103,10 +108,11 @@ if ($type == 'ip' ) {
 
 } elseif ($type == 'update') {
 	$ip  = $_POST['ip'];
+	$name = $_POST['name'];
 	$mac = $_POST['h'];
 
-	if (validate($remote_ip, $ip, $timestamp, $mac))
-		updatedb($ip, $timestamp);
+	if (validate($remote_ip, $ip, $name, $timestamp, $mac))
+		updatedb($ip, $name, $timestamp);
 }
 
 ?>
